@@ -34,12 +34,42 @@ var server = http.createServer((req, res) => {
     req.on('end', () => {
         buffer += decoder.end();
 
-        //send the response
-        res.end('Hello Wolrd\n');
+        //Choose the handler this request should go
+        var chosenHandler = typeof (router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
+
+        //Construct the data object to send to the handler
+        var data = {
+            'trimmedPath': trimmedPath,
+            'queryStringObject': queryStringObject,
+            'method': method,
+            'headers': headers,
+            'payload': buffer
+        }
+
+        //Route the request to the handler specified in the router
+        chosenHandler(data, (statusCode, payload) => {
+            //use the status code called by the handler or default
+            statusCode = typeof (statusCode) === 'number' ? statusCode : 200;
+
+            //use the payload called back by the handler,or default to an empty
+            payload = typeof (payload) === 'object' ? payload : {};
+
+            //convert the payload to a string
+            var payloadString = JSON.stringify(payload);
+
+            //return the response
+            res.writeHead(statusCode);
+            res.end(payloadString);
+
+
+            //send the response            
+            console.log('Returning this response', statusCode, payloadString);
+
+        })
+
 
         //Log the request path
         console.log('Request received on path ' + trimmedPath + 'with method ' + method + 'with queryString', queryStringObject);
-        console.log('Request received with this payload', buffer);
     })
 
 });
@@ -49,3 +79,19 @@ var port = process.env.port || 3000;
 server.listen(port, () => {
     console.log(`The server is listening on port ${port} now`);
 })
+
+//Define the handlers
+handlers = {
+    sample: (data, cb) => {
+        //callback a http status code and a payload object
+        cb(406, { 'name': 'sample handler' })
+    },
+    notFound: (data, cb) => {
+        cb(404);
+    }
+}
+
+//Define a request router
+var router = {
+    'sample': handlers.sample
+};
