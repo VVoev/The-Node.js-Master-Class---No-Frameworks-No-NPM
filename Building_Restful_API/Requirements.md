@@ -12,4 +12,4 @@
 
 7.In the background,workers perform all the "Checks" at the appropriate times,and send alerts to the users when a check changes its state from "up" to "down",or visa versa.
 
-!!!For the purpose of the app instead of Db,File-system will be used as a key-value store.
+!!!For the purpose of the app instead of Db,File-system will be used as a key-value store in Json format.
