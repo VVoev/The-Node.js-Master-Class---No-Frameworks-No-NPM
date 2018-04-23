@@ -1,0 +1,17 @@
+{
+  "name": "commonnodeconventions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "jokes": "0.0.2"
+  },
+  "author": "",
+  "license": "ISC"
+}
