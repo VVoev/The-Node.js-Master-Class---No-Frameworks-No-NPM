@@ -101,9 +101,8 @@ var unifiedServer = (req, res) => {
 
 //Define the handlers
 handlers = {
-    sample: (data, cb) => {
-        //callback a http status code and a payload object
-        cb(406, { 'name': 'sample handler' })
+    ping: (data, cb) => {
+        cb(200);
     },
     notFound: (data, cb) => {
         cb(404);
@@ -112,5 +111,5 @@ handlers = {
 
 //Define a request router
 var router = {
-    'sample': handlers.sample
+    'ping': handlers.ping
 };
