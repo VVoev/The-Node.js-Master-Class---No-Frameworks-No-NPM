@@ -48,7 +48,8 @@ handlers._users = {};
 //Container for the tokens methods
 
 handlers._tokens = {
-    //Required data :phone,password
+    //Tokens post
+    //Required data phone and password
     //Optional data:none
     post: (data, cb) => {
         var phone = checkIfPhoneIsStringAndTenDigitsExactly(data.payload.phone);
@@ -88,36 +89,63 @@ handlers._tokens = {
         } else {
             cb(400, { 'Error': 'Missing required fields' })
         }
+    },
+
+    //Required data:id
+    //Optional data:none
+    get: (data, cb) => {
+        //check the phone number 
+        var id = typeof (data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id : false;
+        if (id) {
+            _data.read('tokens', id, (err, tokenData) => {
+                if (!err && tokenData) {
+                    cb(200, tokenData);
+                } else {
+                    cb(404);
+                }
+            })
+        } else {
+            cb(400, { 'Error': 'Missing required data' });
+        }
+    },
+
+    //Tokens put
+    //Required data:id,extend
+    //Optional data:none
+    put: (data, cb) => {
+        var id = typeof (data.payload.id) == 'string' && data.payload.id.trim().length == 20 ? data.payload.id : false;
+        var extend = typeof (data.payload.extend) == 'boolean' && data.payload.extend == true ? true : false;
+        if (id && extend) {
+            _data.read('tokens', id, (err, tokenData) => {
+                if (!err && tokenData) {
+                    //check to make sure the token isnt already expired
+                    if (tokenData.expires > Date.now()) {
+                        tokenData.expires = Date.now() + (1000 * 60 * 60);
+
+                        //store the new update
+                        _data.update('tokens', id, tokenData, (err) => {
+                            if (!err) {
+                                cb(200);
+                            } else {
+                                cb(500, { 'Error': 'Could not update the token' });
+                            }
+                        })
+                    } else {
+                        cb(400, { 'Error': 'Token has been expired' });
+                    }
+                } else {
+                    cb(400, { 'Error': 'Specified token does not exist' });
+                }
+            })
+        } else {
+            cb(400, { 'Error': 'Missing required field(s) or fields(s) are invalid' });
+        }
     }
-};
-
-handlers._tokens.get = (data, cb) => {
-    //check the phone number 
-    console.log(data);
-    var id = typeof (data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id : false;
-    console.log(id);
-    if (id) {
-        _data.read('tokens', id, (err, tokenData) => {
-            if (!err && tokenData) {
-                cb(200, tokenData);
-            } else {
-                cb(404);
-            }
-        })
-    } else {
-        cb(400, { 'Error': 'Missing required data' });
-    }
 }
 
 
 
-handlers._tokens.put = (data, cb) => {
 
-}
-
-handlers._tokens.delete = (data, cb) => {
-
-}
 
 //Get User
 //Required data:phone
