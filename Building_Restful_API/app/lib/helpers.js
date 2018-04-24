@@ -32,7 +32,7 @@ helpers.createRandomString = (strLength) => {
     if (strLength) {
         var possibleCharacters = 'qwertyuiopasdfghjklzxcvbnm1234567890';
         var str = '';
-        for (i = 1; i < strLength; i += 1) {
+        for (i = 1; i <= strLength; i += 1) {
             var randomChar = possibleCharacters.charAt(Math.floor(Math.random() * possibleCharacters.length));
             str += randomChar;
         }
