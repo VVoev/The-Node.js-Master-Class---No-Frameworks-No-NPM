@@ -12,17 +12,25 @@ handlers = {
     notFound: (data, cb) => {
         cb(404);
     },
-    users(data, cb) {
+    users: (data, cb) => {
         var acceptableMethods = ['get', 'post', 'put', 'delete'];
         if (acceptableMethods.indexOf(data.method) > -1) {
             handlers._users[data.method](data, cb);
         } else {
             cb(405);
         }
+    },
+    tokens: (data, cb) => {
+        var acceptableMethods = ['get', 'post', 'put', 'delete'];
+        if (acceptableMethods.indexOf(data.method) > -1) {
+            handlers._tokens[data.method](data, cb);
+        } else {
+            cb(405);
+        }
     }
 }
 
-//Validator
+//private Validator
 checkIfStringAndLeghtIsEnought = (name, len) => {
     var result = typeof (name) == 'string' && name.trim().length > 0 ? name.trim() : false;
     return result;
@@ -36,6 +44,64 @@ checkIfPhoneIsStringAndTenDigitsExactly = (phone) => {
 //Container for the users submethods
 
 handlers._users = {};
+
+//Container for the tokens methods
+
+handlers._tokens = {};
+
+handlers._tokens.get = (data, cb) => {
+
+}
+
+//Required data :phone,password
+//Optional data:none
+handlers._tokens.post = (data, cb) => {
+    var phone = checkIfPhoneIsStringAndTenDigitsExactly(data.payload.phone);
+    var password = checkIfStringAndLeghtIsEnought(data.payload.password, 0);
+    if (phone && password) {
+        //Lookup the user who matches the phone number
+        _data.read('users', phone, (err, userData) => {
+            if (!err && userData) {
+                //hash the send password and comprare it
+                var hashedPassword = helpers.hash(password);
+                if (hashedPassword === userData.hashedPassword) {
+                    //create a new token with random name set expiration date one hour in the future
+                    var tokenId = helpers.createRandomString(20);
+                    var expires = Date.now() + (1000 * 60 * 60);
+                    var tokenObject = {
+                        'phone': phone,
+                        'id': tokenId,
+                        'expires': expires
+                    };
+
+                    //save the token
+                    _data.create('tokens', tokenId, tokenObject, (err) => {
+                        if (!err) {
+                            cb(200, tokenObject);
+                        } else {
+                            cb(500, { 'Error': 'Could not create new token' });
+                        }
+                    })
+                } else {
+                    cb(400, { 'Error': 'passwords doesnt match' })
+                }
+
+            } else {
+                cb(400, { 'Error': 'Such user is not found' })
+            }
+        })
+    } else {
+        cb(400, { 'Error': 'Missing required fields' })
+    }
+}
+
+handlers._tokens.put = (data, cb) => {
+
+}
+
+handlers._tokens.delete = (data, cb) => {
+
+}
 
 //Get User
 //Required data:phone
@@ -59,7 +125,6 @@ handlers._users.get = (data, cb) => {
         cb(400, { 'Error': 'Missing required data' });
     }
 }
-
 
 //Post User
 handlers._users.post = (data, cb) => {
