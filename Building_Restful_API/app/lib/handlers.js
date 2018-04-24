@@ -162,8 +162,29 @@ handlers._users.put = (data, cb) => {
 };
 
 //Delete User
+//Required field phone
+//Todo only authenticated user should be able to delete
 handlers._users.delete = (data, cb) => {
-
+    //chech that phone number is valid
+    var phone = checkIfPhoneIsStringAndTenDigitsExactly(data.queryStringObject.phone);
+    if (phone) {
+        _data.read('users', phone, (err, data) => {
+            if (!err && data) {
+                //Delete the user
+                _data.delete('users', phone, (err) => {
+                    if (!err) {
+                        cb(200);
+                    } else {
+                        cb(500, { 'Error': 'Could not delete the specified user' })
+                    }
+                })
+            } else {
+                cb(400, { 'Error': 'Could not find the specified user' });
+            }
+        })
+    } else {
+        cb(400, { 'Error': 'Missing required data' });
+    }
 }
 
 

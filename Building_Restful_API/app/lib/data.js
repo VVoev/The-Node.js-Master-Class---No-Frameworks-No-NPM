@@ -86,6 +86,16 @@ lib.update = (dir, file, data, cb) => {
 
 }
 
+// Delete a file
+lib.delete = (dir, file, cb) => {
+
+    // Unlink the file from the filesystem
+    fs.unlink(lib.baseDir + dir + '/' + file + '.json', function (err) {
+        cb(err);
+    });
+}
+
+
 
 module.exports = lib;
 
