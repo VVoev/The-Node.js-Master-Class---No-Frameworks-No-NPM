@@ -4,6 +4,7 @@
 //Dependancies
 var fs = require('fs');
 var path = require('path');
+var helpers = require('./helpers');
 
 //Container
 var lib = {};
@@ -40,56 +41,49 @@ lib.create = (dir, file, data, cb) => {
 }
 
 lib.read = (dir, file, cb) => {
-    fs.readFile(lib.baseDir + dir + '/' + file + '.json', 'utf8', (err, data) => {
-        cb(err, data);
+    fs.readFile(lib.baseDir + dir + '/' + file + '.json', 'utf8', function (err, data) {
+        if (!err && data) {
+            var parsedData = helpers.parseJsonToObject(data);
+            cb(false, parsedData);
+        } else {
+            cb(err, data);
+        }
     });
 }
 
 lib.update = (dir, file, data, cb) => {
-    //Open the file for writing
-    fs.open(lib.baseDir + dir + '/' + file + '.json', 'r+', (err, fileDescriptor) => {
+    // Open the file for writing
+    fs.open(lib.baseDir + dir + '/' + file + '.json', 'r+', function (err, fileDescriptor) {
         if (!err && fileDescriptor) {
-            //convert data to string
+            // Convert data to string
             var stringData = JSON.stringify(data);
 
-            //trunkate the file
-            fs.truncate(fileDescriptor, (err) => {
+            // Truncate the file
+            fs.truncate(fileDescriptor, function (err) {
                 if (!err) {
-                    //write to a file and close it
-                    fs.writeFile(fileDescriptor, stringData, (err) => {
+                    // Write to file and close it
+                    fs.writeFile(fileDescriptor, stringData, function (err) {
                         if (!err) {
-                            fs.close(fileDescriptor, (err) => {
+                            fs.close(fileDescriptor, function (err) {
                                 if (!err) {
                                     cb(false);
                                 } else {
-                                    cb('Error closing the file')
+                                    cb('Error closing existing file');
                                 }
-                            })
+                            });
                         } else {
-                            cb('Error writing to a existing file');
+                            cb('Error writing to existing file');
                         }
-                    })
+                    });
                 } else {
-                    cb('Error truncating file')
+                    cb('Error truncating file');
                 }
-            })
-
+            });
         } else {
-            cb('could not open the file,maybe its not existing')
+            cb('Could not open file for updating, it may not exist yet');
         }
     });
-}
 
-//delete a file
-lib.delete = (dir, file, cb) => {
-    //Unlink the file
-    fs.unlink(lib.baseDir + dir + '/' + file + '.json', (err) => {
-        if (!err) {
-            cb(false);
-        } else {
-            cb('Error while deleting a file')
-        }
-    })
 }
 
 

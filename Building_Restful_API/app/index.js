@@ -7,6 +7,8 @@ var url = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
 var config = require('./config/config');
 var fs = require('fs');
+var handlers = require('./lib/handlers');
+var helpers = require('./lib/helpers');
 
 //instantiate the HTTP server
 var httpServer = http.createServer((req, res) => {
@@ -68,7 +70,7 @@ var unifiedServer = (req, res) => {
             'queryStringObject': queryStringObject,
             'method': method,
             'headers': headers,
-            'payload': buffer
+            'payload': helpers.parseJsonToObject(buffer)
         }
 
         //Route the request to the handler specified in the router
@@ -99,17 +101,10 @@ var unifiedServer = (req, res) => {
     })
 }
 
-//Define the handlers
-handlers = {
-    ping: (data, cb) => {
-        cb(200);
-    },
-    notFound: (data, cb) => {
-        cb(404);
-    }
-}
+
 
 //Define a request router
 var router = {
-    'ping': handlers.ping
+    'ping': handlers.ping,
+    'users': handlers.users
 };
