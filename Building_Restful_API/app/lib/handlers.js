@@ -50,6 +50,26 @@ checkIfPhoneIsStringAndTenDigitsExactly = (phone) => {
     return result;
 }
 
+updateTheOptionalParameter = (protocol, url, successCodes, timeoutSeconds, method, checkData) => {
+    if (protocol) {
+        checkData.protocol = protocol;
+    }
+    if (url) {
+        checkData.url = url
+    }
+    if (successCodes) {
+        checkData.successCodes = successCodes
+    }
+    if (timeoutSeconds) {
+        checkData.timeoutSeconds = timeoutSeconds
+    }
+    if (method) {
+        checkData.method = method;
+    }
+
+    return checkData;
+}
+
 //Container for all the checks methods
 handlers._checks = {
 
@@ -156,6 +176,64 @@ handlers._checks = {
         } else {
             cb(400, { 'Error': 'Missing required field, or field invalid' })
         }
+    },
+
+    //Required data:id
+    //Optional data:protocol,url,method,successCdes,timeoutSeconds (at least one must be set)
+    put: (data, cb) => {
+        // Check for required field
+        var id = typeof (data.payload.id) == 'string' && data.payload.id.trim().length == 20 ? data.payload.id.trim() : false;
+
+        // Check for optional fields
+        var protocol = typeof (data.payload.protocol) == 'string' && ['http', 'https'].indexOf(data.payload.protocol) > -1 ? data.payload.protocol : false;
+        var url = checkIfStringAndLeghtIsEnought(data.payload.url, 0);
+        var method = typeof (data.payload.method) == 'string' && ['get', 'post', 'put', 'delete'].indexOf(data.payload.method) > -1 ? data.payload.method : false;
+        var successCodes = typeof (data.payload.successCodes) == 'object' && data.payload.successCodes instanceof Array && data.payload.successCodes.length > 0 ? data.payload.successCodes : false;
+        var timeoutSeconds = typeof
+            (data.payload.timeoutSeconds) == 'number' &&
+            data.payload.timeoutSeconds % 1 === 0 &&
+            data.payload.timeoutSeconds >= 1 &&
+            data.payload.timeoutSeconds <= 5 ?
+            data.payload.timeoutSeconds : false;
+
+
+        if (id) {
+            //Check to see that there is at least one optional
+            if (protocol || url || successCodes || timeoutSeconds || method) {
+                _data.read('checks', id, (err, checkData) => {
+                    if (!err && checkData) {
+                        var token = typeof (data.headers.token) == 'string' ? data.headers.token : false;
+                        console.log(token);
+                        // Verify that the given token is valid for the phone number
+                        handlers._tokens.verifyToken(token, checkData.userPhone, (tokenIsValid) => {
+                            if (tokenIsValid) {
+                                //update the checkdata
+                                checkData = updateTheOptionalParameter(protocol, url, successCodes, timeoutSeconds, method, checkData);
+
+                                //Store the updates
+                                _data.update('checks', id, checkData, (err) => {
+                                    if (!err) {
+                                        cb(200);
+                                    } else {
+                                        cb(500, { 'Error': 'Could not update the  check' });
+                                    }
+                                })
+                            } else {
+                                cb(403);
+                            }
+                        })
+                    } else {
+                        cb(400, { 'Error': 'check id does not exist' });
+                    }
+                })
+            } else {
+                cb(400, { 'Error': 'Missing optional parameter' });
+            }
+        } else {
+            cb(500, { 'Error': 'Missing required fields' });
+        }
+
+
     }
 }
 
