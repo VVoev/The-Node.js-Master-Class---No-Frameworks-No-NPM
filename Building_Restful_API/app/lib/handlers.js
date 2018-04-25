@@ -140,6 +140,33 @@ handlers._tokens = {
         } else {
             cb(400, { 'Error': 'Missing required field(s) or fields(s) are invalid' });
         }
+    },
+
+
+    //Tokens delete
+    //Required data: id
+    //Optional data:none
+    delete: (data, cb) => {
+        var id = typeof (data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ?
+            data.queryStringObject.id.trim() : false;
+        if (id) {
+            //lookup the token
+            _data.read('tokens', id, (err, data) => {
+                if (!err && data) {
+                    _data.delete('tokens', id, (err) => {
+                        if (!err) {
+                            cb(200);
+                        } else {
+                            cb(400, { 'Error': 'Coulnt delete the token' });
+                        }
+                    })
+                } else {
+                    cb(400, { 'Error': 'could not find the specified token' });
+                }
+            })
+        } else {
+            cb(400, { 'Error': 'provided id is incorrect' });
+        }
     }
 }
 
