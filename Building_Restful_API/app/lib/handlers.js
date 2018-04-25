@@ -3,6 +3,7 @@
 //Dependancies
 var _data = require('./data');
 var helpers = require('./helpers');
+var config = require('../config/config');
 
 //Define the handlers
 handlers = {
@@ -27,6 +28,14 @@ handlers = {
         } else {
             cb(405);
         }
+    },
+    checks: (data, cb) => {
+        var acceptableMethods = ['get', 'post', 'put', 'delete'];
+        if (acceptableMethods.indexOf(data.method) > -1) {
+            handlers._checks[data.method](data, cb);
+        } else {
+            cb(405);
+        }
     }
 }
 
@@ -41,12 +50,116 @@ checkIfPhoneIsStringAndTenDigitsExactly = (phone) => {
     return result;
 }
 
-//Container for the users submethods
+//Container for all the checks methods
+handlers._checks = {
 
-handlers._users = {};
+    //Required data:protocol,url,method,successCode,timeoutSeconds
+    //Optional data:none
+    post: (data, cb) => {
+        //validate inputs
+        var protocol = typeof (data.payload.protocol) == 'string' && ['http', 'https'].indexOf(data.payload.protocol) > -1 ? data.payload.protocol : false;
+        var url = checkIfStringAndLeghtIsEnought(data.payload.url, 0);
+        var method = typeof (data.payload.method) == 'string' && ['get', 'post', 'put', 'delete'].indexOf(data.payload.method) > -1 ? data.payload.method : false;
+        var successCodes = typeof (data.payload.successCodes) == 'object' && data.payload.successCodes instanceof Array && data.payload.successCodes.length > 0 ? data.payload.successCodes : false;
+        var timeoutSeconds = typeof
+            (data.payload.timeoutSeconds) == 'number' &&
+            data.payload.timeoutSeconds % 1 === 0 &&
+            data.payload.timeoutSeconds >= 1 &&
+            data.payload.timeoutSeconds <= 5 ?
+            data.payload.timeoutSeconds : false;
+
+        if (protocol && url && method && successCodes && timeoutSeconds) {
+            //Get the token from the headers
+            var token = typeof (data.headers.token) == 'string' ? data.headers.token : false;
+
+            _data.read('tokens', token, (err, tokenData) => {
+                if (!err && tokenData) {
+                    var userPhone = tokenData.phone;
+
+                    //lookup the userdata
+                    _data.read('users', userPhone, (err, userData) => {
+                        if (!err && userData) {
+                            var userChecks = typeof (userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
+                            //verify the user has less than the max 
+                            if (userChecks.length < config.maxChecks) {
+                                var checkId = helpers.createRandomString(20);
+
+                                var checkObject = {
+                                    'id': checkId,
+                                    'userPhone': userPhone,
+                                    'protocol': protocol,
+                                    'url': url,
+                                    'method': method,
+                                    'successCodes': successCodes,
+                                    'timeoutSeconds': timeoutSeconds
+                                }
+
+                                //save the object
+
+                                _data.create('checks', checkId, checkObject, (err) => {
+                                    if (!err) {
+                                        userData.checks = userChecks;
+                                        userData.checks.push(checkId);
+
+                                        //save the new user data
+                                        _data.update('users', userPhone, userData, (err) => {
+                                            if (!err) {
+                                                cb(200, checkObject);
+                                            } else {
+                                                cb(500, { 'Error': 'Could not update user with new check' });
+                                            }
+                                        })
+                                    } else {
+                                        cb(500, { 'Error': 'Could not create the new check' });
+                                    }
+                                })
+                            } else {
+                                cb(400, { 'Error': 'Use has already maximum number of checks' })
+                            }
+                        } else {
+                            cb(403);
+                        }
+                    })
+                } else {
+                    cb(403);
+                }
+            })
+        } else {
+            cb(400, { 'Error': 'Missing required inputs' })
+        }
+    },
+
+    //Required data:id
+    //Optional data:none
+    get: (data, cb) => {
+        // Check that id is valid
+        var id = typeof (data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
+        if (id) {
+            // Lookup the check
+            _data.read('checks', id, function (err, checkData) {
+                if (!err && checkData) {
+                    // Get the token that sent the request
+                    var token = typeof (data.headers.token) == 'string' ? data.headers.token : false;
+                    // Verify that the given token is valid and belongs to the user who created the check
+                    handlers._tokens.verifyToken(token, checkData.userPhone, function (tokenIsValid) {
+                        if (tokenIsValid) {
+                            // Return check data
+                            cb(200, checkData);
+                        } else {
+                            cb(403);
+                        }
+                    });
+                } else {
+                    cb(404);
+                }
+            });
+        } else {
+            cb(400, { 'Error': 'Missing required field, or field invalid' })
+        }
+    }
+}
 
 //Container for the tokens methods
-
 handlers._tokens = {
     //Tokens post
     //Required data phone and password
@@ -170,10 +283,9 @@ handlers._tokens = {
     }
 }
 
+//Container for the users submethods
 
-
-
-
+handlers._users = {};
 //Get User
 //Required data:phone
 //Optional data:none
