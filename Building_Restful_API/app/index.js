@@ -10,6 +10,10 @@ var fs = require('fs');
 var handlers = require('./lib/handlers');
 var helpers = require('./lib/helpers');
 
+helpers.sendTwilioSms('0888383404', 'Hello From node', (err) => {
+    console.log('error happend', err);
+})
+
 //instantiate the HTTP server
 var httpServer = http.createServer((req, res) => {
     unifiedServer(req, res);
