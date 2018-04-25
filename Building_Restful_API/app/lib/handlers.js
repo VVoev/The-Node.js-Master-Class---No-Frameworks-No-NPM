@@ -156,12 +156,12 @@ handlers._checks = {
         var id = typeof (data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
         if (id) {
             // Lookup the check
-            _data.read('checks', id, function (err, checkData) {
+            _data.read('checks', id, (err, checkData) => {
                 if (!err && checkData) {
                     // Get the token that sent the request
                     var token = typeof (data.headers.token) == 'string' ? data.headers.token : false;
                     // Verify that the given token is valid and belongs to the user who created the check
-                    handlers._tokens.verifyToken(token, checkData.userPhone, function (tokenIsValid) {
+                    handlers._tokens.verifyToken(token, checkData.userPhone, (tokenIsValid) => {
                         if (tokenIsValid) {
                             // Return check data
                             cb(200, checkData);
@@ -234,6 +234,66 @@ handlers._checks = {
         }
 
 
+    },
+
+    //Required data:id
+    //Optional data:none
+    delete: (data, cb) => {
+        // Check that id is valid
+        var id = typeof (data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
+        if (id) {
+            // Lookup the check
+            _data.read('checks', id, (err, checkData) => {
+                if (!err && checkData) {
+                    // Get the token that sent the request
+                    var token = typeof (data.headers.token) == 'string' ? data.headers.token : false;
+                    // Verify that the given token is valid and belongs to the user who created the check
+                    handlers._tokens.verifyToken(token, checkData.userPhone, (tokenIsValid) => {
+                        if (tokenIsValid) {
+
+                            // Delete the check data
+                            _data.delete('checks', id, (err) => {
+                                if (!err) {
+                                    // Lookup the user's object to get all their checks
+                                    _data.read('users', checkData.userPhone, (err, userData) => {
+                                        if (!err) {
+                                            var userChecks = typeof (userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
+
+                                            // Remove the deleted check from their list of checks
+                                            var checkPosition = userChecks.indexOf(id);
+                                            if (checkPosition > -1) {
+                                                userChecks.splice(checkPosition, 1);
+                                                // Re-save the user's data
+                                                userData.checks = userChecks;
+                                                _data.update('users', checkData.userPhone, userData, (err) => {
+                                                    if (!err) {
+                                                        cb(200);
+                                                    } else {
+                                                        cb(500, { 'Error': 'Could not update the user.' });
+                                                    }
+                                                });
+                                            } else {
+                                                cb(500, { "Error": "Could not find the check on the user's object, so could not remove it." });
+                                            }
+                                        } else {
+                                            cb(500, { "Error": "Could not find the user who created the check, so could not remove the check from the list of checks on their user object." });
+                                        }
+                                    });
+                                } else {
+                                    cb(500, { "Error": "Could not delete the check data." })
+                                }
+                            });
+                        } else {
+                            cb(403);
+                        }
+                    });
+                } else {
+                    cb(400, { "Error": "The check ID specified could not be found" });
+                }
+            });
+        } else {
+            cb(400, { "Error": "Missing valid id" });
+        }
     }
 }
 
@@ -375,10 +435,10 @@ handlers._users.get = (data, cb) => {
         // Get token from headers
         var token = typeof (data.headers.token) == 'string' ? data.headers.token : false;
         // Verify that the given token is valid for the phone number
-        handlers._tokens.verifyToken(token, phone, function (tokenIsValid) {
+        handlers._tokens.verifyToken(token, phone, (tokenIsValid) => {
             if (tokenIsValid) {
                 // Lookup the user
-                _data.read('users', phone, function (err, data) {
+                _data.read('users', phone, (err, data) => {
                     if (!err && data) {
                         // Remove the hashed password from the user user object before returning it to the requester
                         delete data.hashedPassword;
@@ -466,11 +526,11 @@ handlers._users.put = (data, cb) => {
             var token = typeof (data.headers.token) == 'string' ? data.headers.token : false;
 
             // Verify that the given token is valid for the phone number
-            handlers._tokens.verifyToken(token, phone, function (tokenIsValid) {
+            handlers._tokens.verifyToken(token, phone, (tokenIsValid) => {
                 if (tokenIsValid) {
 
                     // Lookup the user
-                    _data.read('users', phone, function (err, userData) {
+                    _data.read('users', phone, (err, userData) => {
                         if (!err && userData) {
                             // Update the fields if necessary
                             if (firstName) {
@@ -483,7 +543,7 @@ handlers._users.put = (data, cb) => {
                                 userData.hashedPassword = helpers.hash(password);
                             }
                             // Store the new updates
-                            _data.update('users', phone, userData, function (err) {
+                            _data.update('users', phone, userData, (err) => {
                                 if (!err) {
                                     cb(200);
                                 } else {
@@ -519,12 +579,12 @@ handlers._users.delete = (data, cb) => {
         var token = typeof (data.headers.token) == 'string' ? data.headers.token : false;
 
         // Verify that the given token is valid for the phone number
-        handlers._tokens.verifyToken(token, phone, function (tokenIsValid) {
+        handlers._tokens.verifyToken(token, phone, (tokenIsValid) => {
             if (tokenIsValid) {
                 // Lookup the user
-                _data.read('users', phone, function (err, data) {
+                _data.read('users', phone, (err, data) => {
                     if (!err && data) {
-                        _data.delete('users', phone, function (err) {
+                        _data.delete('users', phone, (err) => {
                             if (!err) {
                                 cb(200);
                             } else {
