@@ -569,7 +569,6 @@ handlers._users.put = (data, cb) => {
 
 //Delete User
 //Required field phone
-//Todo only authenticated user should be able to delete
 handlers._users.delete = (data, cb) => {
     //chech that phone number is valid
     var phone = checkIfPhoneIsStringAndTenDigitsExactly(data.queryStringObject.phone);
@@ -582,11 +581,36 @@ handlers._users.delete = (data, cb) => {
         handlers._tokens.verifyToken(token, phone, (tokenIsValid) => {
             if (tokenIsValid) {
                 // Lookup the user
-                _data.read('users', phone, (err, data) => {
-                    if (!err && data) {
+                _data.read('users', phone, (err, userData) => {
+                    if (!err && userData) {
                         _data.delete('users', phone, (err) => {
                             if (!err) {
-                                cb(200);
+                                //delete each of the checks associated with the user
+                                var userChecks = typeof (userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
+                                var checkTodelete = userChecks.length;
+                                if (checkTodelete > 0) {
+                                    var checksDeleted = 0;
+                                    var deletionErrors = false;
+
+                                    userChecks.forEach(checkId => {
+                                        //delete the check
+                                        _data.delete('checks', checkId, (err) => {
+                                            if (err) {
+                                                deletionErrors = true;
+                                            }
+                                            checksDeleted++;
+                                            if (checksDeleted === checkTodelete) {
+                                                if (!deletionErrors) {
+                                                    cb(200);
+                                                } else {
+                                                    cb(500, { 'Error': 'Error pop up while delete checks to users' })
+                                                }
+                                            }
+                                        })
+                                    });
+                                } else {
+                                    cb(200);
+                                }
                             } else {
                                 cb(500, { 'Error': 'Could not delete the specified user' });
                             }
