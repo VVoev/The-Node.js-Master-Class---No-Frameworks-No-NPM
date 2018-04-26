@@ -1,1 +1,12 @@
-{"firstName":"Petio","lastName":"Krastev","phone":"0988805555","hashedPassword":"ff668519d453b9bfe11fef01ff3fbb5b63732b239e1c0d5532208aba1a02b1e7","tosAggrement":true,"checks":["2jgpq5kdunzss5ncehlr","joqa9738bp4bl1g77u7w","qjwpzb863xhal0x8ivf3"]}
+{
+    "firstName": "Petio",
+    "lastName": "Krastev",
+    "phone": "359988803738",
+    "hashedPassword": "ff668519d453b9bfe11fef01ff3fbb5b63732b239e1c0d5532208aba1a02b1e7",
+    "tosAggrement": true,
+    "checks": [
+        "pelkxluj6773m9nkexdn",
+        "2xbuq73oqi015jlg4bmt",
+        "sfjtx3ivwd2y4pokazpr"
+    ]
+}

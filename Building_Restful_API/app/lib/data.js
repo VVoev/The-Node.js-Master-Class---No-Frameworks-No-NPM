@@ -53,18 +53,18 @@ lib.read = (dir, file, cb) => {
 
 lib.update = (dir, file, data, cb) => {
     // Open the file for writing
-    fs.open(lib.baseDir + dir + '/' + file + '.json', 'r+', function (err, fileDescriptor) {
+    fs.open(lib.baseDir + dir + '/' + file + '.json', 'r+', (err, fileDescriptor) => {
         if (!err && fileDescriptor) {
             // Convert data to string
             var stringData = JSON.stringify(data);
 
             // Truncate the file
-            fs.truncate(fileDescriptor, function (err) {
+            fs.truncate(fileDescriptor, (err) => {
                 if (!err) {
                     // Write to file and close it
-                    fs.writeFile(fileDescriptor, stringData, function (err) {
+                    fs.writeFile(fileDescriptor, stringData, (err) => {
                         if (!err) {
-                            fs.close(fileDescriptor, function (err) {
+                            fs.close(fileDescriptor, (err) => {
                                 if (!err) {
                                     cb(false);
                                 } else {
@@ -94,6 +94,22 @@ lib.delete = (dir, file, cb) => {
         cb(err);
     });
 }
+
+// list all the items in a directory
+lib.list = (dir, cb) => {
+    fs.readdir(lib.baseDir + dir + '/', (err, data) => {
+        if (!err && data && data.length > 0) {
+            var trimedFileName = [];
+            data.forEach(fileName => {
+                trimedFileName.push(fileName.replace('.json', ''));
+            });
+            cb(false, trimedFileName);
+        } else {
+            cb(err, data);
+        }
+    });
+}
+
 
 
 
