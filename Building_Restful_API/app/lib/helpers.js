@@ -57,7 +57,7 @@ helpers.sendTwilioSms = (phone, msg, cb) => {
         //configure the request payload
         var payload = {
             'From': config.twilio.fromPhone,
-            'To': '+359' + phone,
+            'To': '+44' + phone,
             'Body': msg
         }
 

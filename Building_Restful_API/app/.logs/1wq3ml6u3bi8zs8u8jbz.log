@@ -1,0 +1,1 @@
+{"check":{"id":"1wq3ml6u3bi8zs8u8jbz","userPhone":"0988805555","protocol":"http","url":"arena.com","method":"get","successCodes":[200,201],"timeoutSeconds":3,"state":"down","lastChecked":1524756952347},"outcome":{"error":false,"responseCode":302},"state":"down","alert":false,"time":1524756980751}
