@@ -8,12 +8,30 @@ var config = require('../config/config');
 //Define the handlers
 handlers = {
     index: (data, cb) => {
+
+
         // Reject any request that isn't a GET
         if (data.method == 'get') {
+
+            //prepare data for interpolation
+            var templateData = {
+                'head.title': 'This is the title',
+                'head.description': 'This is the meta description',
+                'body.title': 'Hello templated world',
+                'body.class': 'index'
+            }
+
             // Read in a template as a string
-            helpers.getTemplate('index', (err, str) => {
+            helpers.getTemplate('index', templateData, (err, str) => {
                 if (!err && str) {
-                    cb(200, str, 'html');
+                    //add the unuversal heade and footer
+                    helpers.addUniversalTemplates(str, templateData, (err, str) => {
+                        if (!err && str) {
+                            cb(200, str, 'html');
+                        } else {
+                            cb(500, undefined, 'html');
+                        }
+                    })
                 } else {
                     cb(500, undefined, 'html')
                 }
