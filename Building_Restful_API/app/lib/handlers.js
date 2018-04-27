@@ -7,6 +7,22 @@ var config = require('../config/config');
 
 //Define the handlers
 handlers = {
+    index: (data, cb) => {
+        // Reject any request that isn't a GET
+        if (data.method == 'get') {
+            // Read in a template as a string
+            helpers.getTemplate('index', (err, str) => {
+                if (!err && str) {
+                    cb(200, str, 'html');
+                } else {
+                    cb(500, undefined, 'html')
+                }
+            });
+            // Return that template as HTML
+        } else {
+            cb(405, undefined, 'html');
+        }
+    },
     ping: (data, cb) => {
         cb(200);
     },

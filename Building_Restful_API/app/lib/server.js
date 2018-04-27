@@ -72,21 +72,30 @@ server.unifiedServer = (req, res) => {
         }
 
         //Route the request to the handler specified in the router
-        chosenHandler(data, (statusCode, payload) => {
-            //use the status code called by the handler or default
-            statusCode = typeof (statusCode) === 'number' ? statusCode : 200;
+        chosenHandler(data, (statusCode, payload, contentType) => {
+            // Determine the type of response (fallback to JSON)
+            contentType = typeof (contentType) == 'string' ? contentType : 'json';
 
-            //use the payload called back by the handler,or default to an empty
-            payload = typeof (payload) === 'object' ? payload : {};
+            // Use the status code returned from the handler, or set the default status code to 200
+            statusCode = typeof (statusCode) == 'number' ? statusCode : 200;
 
-            //convert the payload to a string
-            var payloadString = JSON.stringify(payload);
+            // Return the response parts that are content-type specific
+            var payloadString = '';
+            if (contentType == 'json') {
+                res.setHeader('Content-Type', 'application/json');
+                payload = typeof (payload) == 'object' ? payload : {};
+                payloadString = JSON.stringify(payload);
+            }
 
-            //return the response
-            res.setHeader('Content-type', 'application/json');
+            if (contentType == 'html') {
+                res.setHeader('Content-Type', 'text/html');
+                payloadString = typeof (payload) == 'string' ? payload : '';
+            }
+
+
+            // Return the response-parts common to all content-types
             res.writeHead(statusCode);
             res.end(payloadString);
-
 
             //send the response            
             if (statusCode === 200) {
@@ -102,6 +111,15 @@ server.unifiedServer = (req, res) => {
 
 //Define a request router
 server.router = {
+    '': handlers.index,
+    'account/create': handlers.accountCreate,
+    'account/edit': handlers.accountEdit,
+    'account/deleted': handlers.accountDeleted,
+    'session/create': handlers.sessionCreate,
+    'session/deleted': handlers.sessionDeleted,
+    'checks/all': handlers.checksList,
+    'checks/create': handlers.checksCreate,
+    'checks/edit': handlers.checksEdit,
     'ping': handlers.ping,
     'users': handlers.users,
     'tokens': handlers.tokens,

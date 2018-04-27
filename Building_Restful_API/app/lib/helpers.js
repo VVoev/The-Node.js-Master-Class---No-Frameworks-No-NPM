@@ -3,6 +3,8 @@ var crypto = require('crypto');
 var config = require('../config/config');
 var https = require('https');
 var querystring = require('querystring');
+var path = require('path');
+var fs = require('fs');
 
 //container for all the helpers
 var helpers = {};
@@ -103,6 +105,22 @@ helpers.sendTwilioSms = (phone, msg, cb) => {
 
     //end the request
     req.end();
+}
+
+helpers.getTemplate = (templateName, cb) => {
+    templateName = typeof (templateName) == 'string' && templateName.length > 0 ? templateName : false;
+    if (templateName) {
+        var templatesDir = path.join(__dirname, '/../templates/');
+        fs.readFile(templatesDir + templateName + '.html', 'utf8', (err, str) => {
+            if (!err && str && str.length > 0) {
+                cb(false, str);
+            } else {
+                cb('No template could be found');
+            }
+        });
+    } else {
+        cb('A valid template name was not specified');
+    }
 }
 
 
