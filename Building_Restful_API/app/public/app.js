@@ -80,3 +80,64 @@ app.client.request = function (headers, path, method, queryStringObject, payload
     var payloadString = JSON.stringify(payload);
     xhr.send(payloadString);
 }
+
+// Bind the forms
+app.bindForms = function () {
+    document.querySelector("form").addEventListener("submit", function (e) {
+
+        // Stop it from submitting
+        e.preventDefault();
+        var formId = this.id;
+        var path = this.action;
+        var method = this.method.toUpperCase();
+
+        // Hide the error message (if it's currently shown due to a previous error)
+        document.querySelector("#" + formId + " .formError").style.display = 'hidden';
+
+        // Turn the inputs into a payload
+        var payload = {};
+        var elements = this.elements;
+        for (var i = 0; i < elements.length; i++) {
+            if (elements[i].type !== 'submit') {
+                var valueOfElement = elements[i].type == 'checkbox' ? elements[i].checked : elements[i].value;
+                payload[elements[i].name] = valueOfElement;
+            }
+        }
+
+        // Call the API
+        app.client.request(undefined, path, method, undefined, payload, function (statusCode, responsePayload) {
+            // Display an error on the form if needed
+            if (statusCode !== 200) {
+
+                // Try to get the error from the api, or set a default error message
+                var error = typeof (responsePayload.Error) == 'string' ? responsePayload.Error : 'An error has occured, please try again';
+
+                // Set the formError field with the error text
+                document.querySelector("#" + formId + " .formError").innerHTML = error;
+
+                // Show (unhide) the form error field on the form
+                document.querySelector("#" + formId + " .formError").style.display = 'block';
+
+            } else {
+                // If successful, send to form response processor
+                app.formResponseProcessor(formId, payload, responsePayload);
+            }
+
+        });
+    });
+};
+
+app.formResponseProcessor = function (formId, requstPayload, responsePayload) {
+    var functionToCall = false;
+    if (formId == 'accountCreate') {
+        console.log('the account create form was succesfully submited');
+    }
+}
+
+app.init = function () {
+    app.bindForms();
+}
+
+window.onload = function () {
+    app.init();
+}
