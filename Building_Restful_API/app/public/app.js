@@ -15,7 +15,7 @@ app.client = {};
 
 //interface for making api calls
 // Interface for making API calls
-app.client.request = function (headers, path, method, queryStringObject, payload, callback) {
+app.client.request = function (headers, path, method, queryStringObject, payload, cb) {
 
     // Set defaults
     headers = typeof (headers) == 'object' && headers !== null ? headers : {};
@@ -23,7 +23,7 @@ app.client.request = function (headers, path, method, queryStringObject, payload
     method = typeof (method) == 'string' && ['POST', 'GET', 'PUT', 'DELETE'].indexOf(method.toUpperCase()) > -1 ? method.toUpperCase() : 'GET';
     queryStringObject = typeof (queryStringObject) == 'object' && queryStringObject !== null ? queryStringObject : {};
     payload = typeof (payload) == 'object' && payload !== null ? payload : {};
-    callback = typeof (callback) == 'function' ? callback : false;
+    cb = typeof (cb) == 'function' ? cb : false;
 
     // For each query string parameter sent, add it to the path
     var requestUrl = path + '?';
@@ -63,13 +63,13 @@ app.client.request = function (headers, path, method, queryStringObject, payload
             var statusCode = xhr.status;
             var responseReturned = xhr.responseText;
 
-            // Callback if requested
-            if (callback) {
+            // cb if requested
+            if (cb) {
                 try {
                     var parsedResponse = JSON.parse(responseReturned);
-                    callback(statusCode, parsedResponse);
+                    cb(statusCode, parsedResponse);
                 } catch (e) {
-                    callback(statusCode, false);
+                    cb(statusCode, false);
                 }
 
             }
