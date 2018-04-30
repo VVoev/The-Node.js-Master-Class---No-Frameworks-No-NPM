@@ -7,6 +7,7 @@ var debug = util.debuglog('cli');
 var events = require('events');
 var os = require('os');
 var v8 = require('v8');
+var _data = require('./data');
 class _events extends events { };
 var e = new _events();
 
@@ -174,7 +175,22 @@ cli.responders.stats = function () {
 
 // List Users
 cli.responders.listUsers = function () {
-    console.log("You asked to list users");
+    _data.list('users', (err, userIds) => {
+        if (!err && userIds && userIds.length > 0) {
+            cli.verticalSpace();
+            userIds.forEach(userId => {
+                _data.read('users', userId, (err, userData) => {
+                    if (!err && userData) {
+                        var line = `Name ${userData.firstName} ${userData.lastName} with phone:${userData.phone} Checks:`;
+                        var numberOfChecks = typeof (userData.checks) == 'object' && userData.checks instanceof Array && userData.checks.length > 0 ? userData.checks.length : 0;
+                        line += numberOfChecks;
+                        console.log(line);
+                        cli.verticalSpace();
+                    }
+                })
+            });
+        }
+    })
 };
 
 // More user info
