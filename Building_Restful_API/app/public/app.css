@@ -154,6 +154,19 @@ body.index .blurb{
   background-color: #217844 !important;
 }
 
+.cta.red{
+  background-color: #c83737 !important;
+}
+
+.warning{
+  font-style: italic;
+  color: #c83737;
+  font-size: 17px;
+  text-align: center;
+  line-height: 150%;
+  padding: 0 0 20px 0 ;
+}
+
 /* Form Styling for Account Creation page and others */
 .formWrapper{
   margin: 0 auto;
