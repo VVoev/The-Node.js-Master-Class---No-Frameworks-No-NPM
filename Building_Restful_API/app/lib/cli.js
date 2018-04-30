@@ -58,8 +58,76 @@ cli.responders = {};
 
 // Help / Man
 cli.responders.help = function () {
-    console.log("You asked for help");
+    var commands = {
+        'exit': 'Kill the CLI (and the rest of the application)',
+        'man': 'Show this help page',
+        'help': 'Alias of the "man" command',
+        'stats': 'Get statistics on the underlying operating system and resource utilization',
+        'List users': 'Show a list of all the registered (undeleted) users in the system',
+        'More user info --{userId}': 'Show details of a specified user',
+        'List checks --up --down': 'Show a list of all the active checks in the system, including their state. The "--up" and "--down flags are both optional."',
+        'More check info --{checkId}': 'Show details of a specified check',
+        'List logs': 'Show a list of all the log files available to be read (compressed and uncompressed)',
+        'More log info --{logFileName}': 'Show details of a specified log file',
+    };
+
+    //show a header for the help that is as wide as the screen
+    cli.horizontalLine();
+    cli.centered('CLI MANUAL');
+    cli.horizontalLine();
+    cli.verticalSpace(2);
+
+    //show each command followed by its explanation in white:yellow
+    for (var key in commands) {
+        if (commands.hasOwnProperty(key)) {
+            var value = commands[key];
+            var line = '\x1b[33m' + key + '\x1b[0m';
+            var padding = 60 - line.length;
+
+            for (i = 0; i < padding; i++) {
+                line += ' ';
+            }
+
+            line += value;
+            console.log(line);
+            cli.verticalSpace();
+        }
+    }
+
+    cli.verticalSpace(1);
+    cli.horizontalLine();
 };
+
+cli.verticalSpace = (lines) => {
+    lines = typeof (lines) == 'number' && lines > 0 ? lines : 1;
+    for (i = 0; i < lines; i += 1) {
+        console.log('');
+    }
+}
+
+cli.horizontalLine = () => {
+    var width = process.stdout.columns;
+    var lines = '';
+    for (i = 0; i < width; i += 1) {
+        lines += '-';
+    }
+    console.log(lines);
+}
+
+cli.centered = (str) => {
+    str = typeof (str) === 'string' && str.trim().length > 0 ? str.trim() : '';
+
+    var width = process.stdout.columns;
+
+    var leftPadding = Math.floor((width - str.length) / 2);
+
+    var line = '';
+    for (i = 0; i < leftPadding; i += 1) {
+        line += ' ';
+    }
+    line += str;
+    console.log(line);
+}
 
 // Exit
 cli.responders.exit = function () {
