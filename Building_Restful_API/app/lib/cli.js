@@ -5,6 +5,8 @@ var readline = require('readline');
 var util = require('util');
 var debug = util.debuglog('cli');
 var events = require('events');
+var os = require('os');
+var v8 = require('v8');
 class _events extends events { };
 var e = new _events();
 
@@ -136,7 +138,38 @@ cli.responders.exit = function () {
 
 // Stats
 cli.responders.stats = function () {
-    console.log("You asked for stats");
+    var stats = {
+        'Load Average': os.loadavg().join(' '),
+        'CPU Count': os.cpus().length,
+        'Free Memory': os.freemem(),
+        'Current Malloced Memory': v8.getHeapStatistics().malloced_memory,
+        'Peak Malloced Memory': v8.getHeapStatistics().peak_malloced_memory,
+        'Allocated Heap Used (%)': Math.round((v8.getHeapStatistics().used_heap_size / v8.getHeapStatistics().total_heap_size) * 100),
+        'Available Heap Allocated (%)': Math.round((v8.getHeapStatistics().total_heap_size / v8.getHeapStatistics().heap_size_limit) * 100),
+        'Uptime': os.uptime() + ' Seconds',
+    }
+
+    //Create a hder for the stats
+    cli.horizontalLine();
+    cli.centered('SYSTEM STATISTICS');
+    cli.horizontalLine();
+    cli.verticalSpace(2);
+
+    for (var key in stats) {
+        if (stats.hasOwnProperty(key)) {
+            var value = stats[key];
+            var line = '\x1b[33m' + key + '\x1b[0m';
+            var padding = 60 - line.length;
+
+            for (i = 0; i < padding; i++) {
+                line += ' ';
+            }
+
+            line += value;
+            console.log(line);
+            cli.verticalSpace();
+        }
+    }
 };
 
 // List Users
