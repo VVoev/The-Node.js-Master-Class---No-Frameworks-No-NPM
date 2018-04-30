@@ -213,8 +213,30 @@ cli.responders.moreUserInfo = function (str) {
 };
 
 // List Checks
-cli.responders.listChecks = function () {
-    console.log("You asked to list checks");
+cli.responders.listChecks = function (str) {
+    _data.list('checks', function (err, checkIds) {
+        if (!err && checkIds && checkIds.length > 0) {
+            cli.verticalSpace();
+            checkIds.forEach(function (checkId) {
+                _data.read('checks', checkId, function (err, checkData) {
+                    if (!err && checkData) {
+                        var includeCheck = false;
+                        var lowerString = str.toLowerCase();
+                        // Get the state, default to down
+                        var state = typeof (checkData.state) == 'string' ? checkData.state : 'down';
+                        // Get the state, default to unknown
+                        var stateOrUnknown = typeof (checkData.state) == 'string' ? checkData.state : 'unknown';
+                        // If the user has specified that state, or hasn't specified any state
+                        if ((lowerString.indexOf('--' + state) > -1) || (lowerString.indexOf('--down') == -1 && lowerString.indexOf('--up') == -1)) {
+                            var line = 'ID: ' + checkData.id + ' ' + checkData.method.toUpperCase() + ' ' + checkData.protocol + '://' + checkData.url + ' State: ' + stateOrUnknown;
+                            console.log(line);
+                            cli.verticalSpace();
+                        }
+                    }
+                });
+            });
+        }
+    });
 };
 
 // More check info
