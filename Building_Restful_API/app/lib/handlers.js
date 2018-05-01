@@ -9,6 +9,9 @@ var helpers = require('./helpers');
 var config = require('./config');
 var _url = require('url');
 var dns = require('dns');
+var _performance = require('perf_hooks').performance;
+var utils = require('util');
+var debug = utils.debuglog('performance');
 
 // Define all the handlers
 var handlers = {};
@@ -612,16 +615,23 @@ handlers._tokens = {};
 // Required data: phone, password
 // Optional data: none
 handlers._tokens.post = function (data, callback) {
+  _performance.mark('entered function');
   var phone = typeof (data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
   var password = typeof (data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
+  _performance.mark('inputs validated');
   if (phone && password) {
     // Lookup the user who matches that phone number
+    _performance.mark('beggining user lookup');
     _data.read('users', phone, function (err, userData) {
+      _performance.mark('user lookup complete');
       if (!err && userData) {
         // Hash the sent password, and compare it to the password stored in the user object
+        _performance.mark('beginning password hashing');
         var hashedPassword = helpers.hash(password);
+        _performance.mark('finishing password hashing');
         if (hashedPassword == userData.hashedPassword) {
           // If valid, create a new token with a random name. Set an expiration date 1 hour in the future.
+          _performance.mark('creating data or token');
           var tokenId = helpers.createRandomString(20);
           var expires = Date.now() + 1000 * 60 * 60;
           var tokenObject = {
@@ -631,7 +641,21 @@ handlers._tokens.post = function (data, callback) {
           };
 
           // Store the token
+          _performance.mark('beginning storing token');
           _data.create('tokens', tokenId, tokenObject, function (err) {
+            _performance.mark('finishing storing token');
+
+            //Gather all measurements
+
+            _performance.measure('Begging to a End', 'entered function', 'finishing storing token');
+            _performance.measure('Measuring hashing password', 'beginning password hashing', 'finishing password hashing')
+
+            var measurements = _performance.getEntriesByType('measure');
+            measurements.forEach((measure) => {
+              debug('\x1b[33m%s\x1b[0m', measure.name + ' ' + measure.duration);
+            })
+
+
             if (!err) {
               callback(200, tokenObject);
             } else {
