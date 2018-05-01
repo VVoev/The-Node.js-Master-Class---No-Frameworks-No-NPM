@@ -109,6 +109,11 @@ handlers.sessionCreate = function (data, callback) {
   }
 }
 
+handlers.exampleError = function (data, callback) {
+  var error = new Error('Example for a error');
+  throw (error);
+}
+
 handlers.sessionDeleted = function (data, callback) {
   // Reject any request that isn't a GET
   if (data.method == 'get') {
