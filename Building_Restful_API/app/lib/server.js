@@ -16,7 +16,6 @@ var path = require('path');
 var util = require('util');
 var debug = util.debuglog('server');
 
-
 // Instantiate the server module object
 var server = {};
 
@@ -80,20 +79,18 @@ server.unifiedServer = function (req, res) {
     // Route the request to the handler specified in the router
     try {
       chosenHandler(data, function (statusCode, payload, contentType) {
-        server.processHandlerResponse(res, method, trimmedPath, statuscode, payload, contentType);
+        server.processHandlerResponse(res, method, trimmedPath, statusCode, payload, contentType);
+
       });
+    } catch (e) {
+      debug(e);
+      server.processHandlerResponse(res, method, trimmedPath, 500, { 'Error': 'An unknown error has occured' }, 'json');
     }
-    catch (error) {
-      debug(error);
-      server.processHandlerResponse(res, method, trimmedPath, 500, { 'Error': 'Unknow error has occured' }, 'json');
-    }
-
-
   });
 };
 
+// Process the response from the handler
 server.processHandlerResponse = function (res, method, trimmedPath, statusCode, payload, contentType) {
-
   // Determine the type of response (fallback to JSON)
   contentType = typeof (contentType) == 'string' ? contentType : 'json';
 
@@ -149,7 +146,6 @@ server.processHandlerResponse = function (res, method, trimmedPath, statusCode, 
     debug('\x1b[31m%s\x1b[0m', method.toUpperCase() + ' /' + trimmedPath + ' ' + statusCode);
   }
 };
-
 
 // Define the request router
 server.router = {
