@@ -9,6 +9,7 @@ var os = require('os');
 var v8 = require('v8');
 var _data = require('./data');
 var _logs = require('./logs');
+var helpers = require('./helpers');
 class _events extends events { };
 var e = new _events();
 
@@ -275,7 +276,28 @@ cli.responders.listLogs = function () {
 
 // More logs info
 cli.responders.moreLogInfo = function (str) {
-    console.log("You asked for more log info", str);
+    //get the id from the string that has been provided
+    var arr = str.split('--');
+    var logFileName = typeof (arr[1]) === 'string' && arr[1].trim().length > 0 ? arr[1].trim() : false;
+    console.log(logFileName);
+
+    if (logFileName) {
+        cli.verticalSpace();
+        //decompress the log file
+        _logs.decompress(logFileName, (err, stringData) => {
+            if (!err && stringData) {
+                //split into lines
+                var arr = stringData.split('\n');
+                arr.forEach((jsonString) => {
+                    var logObj = helpers.parseJsonToObject(jsonString);
+                    if (logObj && JSON.stringify(logObj) !== '{}') {
+                        console.dir(logObj, { 'colors': true });
+                        cli.verticalSpace();
+                    }
+                })
+            }
+        })
+    }
 };
 
 
@@ -295,7 +317,7 @@ cli.processInput = (str) => {
             'list checks',
             'more check info',
             'list logs',
-            'more logs info'
+            'more log info'
         ]
 
         //go thru the possible inputs and emit a event when match is found
